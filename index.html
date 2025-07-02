@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <title>מחולל אקורדים לפי סולם</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f8;
+      direction: rtl;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    select, input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    td input {
+      width: 100%;
+      border: none;
+      background: none;
+      text-align: center;
+      font-size: 16px;
+    }
+    .capo-box {
+      margin-top: 30px;
+      background: #eef2f7;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>מחולל אקורדים לפי סולם</h1>
+  <label for="scaleSelect">בחר סולם:</label>
+  <select id="scaleSelect" onchange="updateTable()">
+    <option value="C">C</option>
+    <option value="G">G</option>
+    <option value="D">D</option>
+    <option value="A">A</option>
+    <option value="E">E</option>
+    <option value="F">F</option>
+    <option value="Bb">Bb</option>
+    <option value="Eb">Eb</option>
+    <option value="Ab">Ab</option>
+    <option value="Db">Db</option>
+    <option value="Gb">Gb</option>
+    <option value="B">B</option>
+    <option value="F#">F#</option>
+    <option value="C#">C#</option>
+    <option value="Am">Am</option>
+    <option value="Em">Em</option>
+    <option value="Dm">Dm</option>
+    <option value="Gm">Gm</option>
+    <option value="Cm">Cm</option>
+    <option value="Fm">Fm</option>
+    <option value="Bbm">Bbm</option>
+    <option value="Ebm">Ebm</option>
+    <option value="Abm">Abm</option>
+    <option value="Dbm">Dbm</option>
+  </select>
+
+  <table>
+    <thead>
+      <tr>
+        <th>דרגה</th>
+        <th>שם האקורד</th>
+        <th>סוג</th>
+        <th>תפקיד משוער</th>
+      </tr>
+    </thead>
+    <tbody id="chordTable"></tbody>
+  </table>
+
+  <div class="capo-box">
+    <h3>חשב מיקום קאפו 🎸</h3>
+    <label for="fromScale">סולם שאתה מנגן בו:</label>
+    <select id="fromScale"></select>
+    <label for="toScale">סולם שאתה רוצה שישמע:</label>
+    <select id="toScale"></select>
+    <button onclick="calculateCapo()">חשב</button>
+    <p id="capoResult"></p>
+  </div>
+</div>
+
+<script>
+const chromatic = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+const majorPattern = [
+  ["I", "Major", "מרכז השיר"],
+  ["ii", "minor", "משמש לעומק ומעבר"],
+  ["iii", "minor", "צליל רגשי"],
+  ["IV", "Major", "אקורד מעבר"],
+  ["V", "Major", "אקורד חזק לפני חזרה"],
+  ["vi", "minor", "אקורד עצוב/חילופי בסיס"],
+  ["vii°", "diminished", "לא יציב, יוצר מתח"]
+];
+
+const minorPattern = [
+  ["i", "minor", "מרכז הסולם העצוב"],
+  ["ii°", "diminished", "מתח"],
+  ["III", "Major", "תחושת תקווה"],
+  ["iv", "minor", "עומק"],
+  ["v", "minor", "מתח לפני פתרון"],
+  ["VI", "Major", "הרחבה רגשית"],
+  ["VII", "Major", "לפני חזרה לטוניקה"]
+];
+
+const enharmonicMap = {
+  "Bb": "A#",
+  "Eb": "D#",
+  "Ab": "G#",
+  "Db": "C#",
+  "Gb": "F#",
+  "Bbm": "A#m",
+  "Ebm": "D#m",
+  "Abm": "G#m",
+  "Dbm": "C#m",
+  "Gbm": "F#m"
+};
+
+const allScales = [
+  "C","G","D","A","E","F","Bb","Eb","Ab","Db","Gb","B","F#","C#",
+  "Am","Em","Dm","Gm","Cm","Fm","Bbm","Ebm","Abm","Dbm"
+];
+
+const scales = {};
+
+function generateScale(baseNote) {
+  let note = baseNote;
+  if (!chromatic.includes(baseNote.replace('m',''))) {
+    note = enharmonicMap[baseNote];
+  }
+  if (!note) return;
+
+  const isMinor = baseNote.endsWith('m');
+  const steps = isMinor ? [2,1,2,2,1,2,2] : [2,2,1,2,2,2,1];
+  let index = chromatic.indexOf(note.replace('m',''));
+  const notes = [];
+  for (let step of steps) {
+    notes.push(chromatic[index % chromatic.length]);
+    index += step;
+  }
+  const pattern = isMinor ? minorPattern : majorPattern;
+  scales[baseNote] = pattern.map((p, i) => [p[0], notes[i], p[1], p[2]]);
+}
+
+allScales.forEach(generateScale);
+
+function updateTable() {
+  const scale = document.getElementById("scaleSelect").value;
+  const tableBody = document.getElementById("chordTable");
+  tableBody.innerHTML = "";
+  if (!scales[scale]) {
+    generateScale(scale);
+  }
+  scales[scale].forEach(row => {
+    const tr = document.createElement("tr");
+    row.forEach(cell => {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.value = cell;
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+    tableBody.appendChild(tr);
+  });
+}
+
+function calculateCapo() {
+  const from = document.getElementById("fromScale").value;
+  const to = document.getElementById("toScale").value;
+
+  const fromNote = from.replace('m','').toUpperCase();
+  const toNote = to.replace('m','').toUpperCase();
+
+  const enharmonicNorm = {
+    "BB": "A#",
+    "EB": "D#",
+    "AB": "G#",
+    "DB": "C#",
+    "GB": "F#"
+  };
+
+  const fromNorm = enharmonicNorm[fromNote] || fromNote;
+  const toNorm = enharmonicNorm[toNote] || toNote;
+
+  const fromIndex = chromatic.indexOf(fromNorm);
+  const toIndex = chromatic.indexOf(toNorm);
+
+  if (fromIndex === -1 || toIndex === -1) {
+    document.getElementById("capoResult").innerText = "אירעה שגיאה בחישוב הקאפו.";
+    return;
+  }
+
+  const diff = (toIndex - fromIndex + 12) % 12;
+  document.getElementById("capoResult").innerText = diff === 0
+    ? "אין צורך בקאפו - אותו סולם."
+    : `כדי שנשמע כמו ${to}, שים קאפו על סריג ${diff}`;
+}
+
+window.onload = () => {
+  const fromSelect = document.getElementById("fromScale");
+  const toSelect = document.getElementById("toScale");
+
+  fromSelect.innerHTML = "";
+  toSelect.innerHTML = "";
+
+  allScales.forEach(scale => {
+    const opt1 = document.createElement("option");
+    opt1.value = opt1.text = scale;
+    fromSelect.appendChild(opt1);
+    const opt2 = document.createElement("option");
+    opt2.value = opt2.text = scale;
+    toSelect.appendChild(opt2);
+  });
+
+  updateTable();
+};
+</script>
+</body>
+</html>
