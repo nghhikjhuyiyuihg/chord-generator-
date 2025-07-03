@@ -2,7 +2,7 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מחולל אקורדים לפי סולם</title>
   <style>
     body {
@@ -28,13 +28,32 @@
       margin-bottom: 20px;
     }
 
+    label, select, input[type="text"], button {
+      font-size: 16px;
+      width: 100%;
+      margin: 8px 0;
+    }
+
     select, input[type="text"] {
       padding: 10px;
-      width: 100%;
-      margin: 10px 0;
       border: 1px solid #ccc;
       border-radius: 6px;
-      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #0056b3;
     }
 
     table {
@@ -48,6 +67,7 @@
       padding: 12px;
       border-bottom: 1px solid #ddd;
       white-space: nowrap;
+      text-align: center;
     }
 
     th {
@@ -71,44 +91,62 @@
       border-radius: 8px;
     }
 
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      background: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    /* עיצוב מותאם לטלפון - טבלה קומפקטית */
+    /* רספונסיבי - כרטיסים לנייד במקום טבלה */
     @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
       h1 {
         font-size: 20px;
       }
-      select, input[type="text"], button {
+
+      select, input[type="text"], button, label {
         font-size: 14px;
         padding: 8px;
       }
+
       table {
-        font-size: 12px;
-        margin-top: 10px;
+        display: none; /* מסתירים טבלה בנייד */
       }
-      th, td {
-        padding: 6px 8px;
-        white-space: nowrap;
+
+      /* יוצרים כרטיסים במקומה */
+      #chordTable tr {
+        display: block;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #fafafa;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+        text-align: right;
       }
-      td input {
-        font-size: 12px;
-        padding: 0;
+
+      #chordTable tr td {
+        display: block;
+        padding: 4px 0;
+        border: none;
+        white-space: normal; /* מאפשר שורות ארוכות */
+      }
+
+      #chordTable tr td input {
+        font-size: 14px;
+        padding: 4px 0;
+        width: 100%;
+        text-align: right;
+        border: none;
+        background: none;
+      }
+
+      /* תוויות לפני כל שדה בכרטיס */
+      #chordTable tr td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+      }
+
+      /* הקטנת גודל הכותרות והכפתורים */
+      .capo-box {
+        padding: 8px;
+        font-size: 14px;
       }
       button {
         padding: 8px 16px;
@@ -120,6 +158,7 @@
 <body>
   <div class="container">
     <h1>מחולל אקורדים לפי סולם</h1>
+
     <label for="scaleSelect">בחר סולם:</label>
     <select id="scaleSelect" onchange="updateTable()"></select>
 
@@ -209,6 +248,7 @@
         const tr = document.createElement("tr");
 
         const degree = document.createElement("td");
+        degree.setAttribute("data-label", "דרגה");
         const input1 = document.createElement("input");
         input1.value = row[0];
         input1.readOnly = true;
@@ -216,6 +256,7 @@
         tr.appendChild(degree);
 
         const chord = document.createElement("td");
+        chord.setAttribute("data-label", "אקורד");
         const input2 = document.createElement("input");
         const suffix = row[2] === "minor" ? "m" : row[2] === "diminished" ? "°" : "";
         input2.value = row[1] + suffix;
@@ -224,6 +265,7 @@
         tr.appendChild(chord);
 
         const role = document.createElement("td");
+        role.setAttribute("data-label", "תפקיד משוער");
         const input3 = document.createElement("input");
         input3.value = row[3];
         input3.readOnly = true;
