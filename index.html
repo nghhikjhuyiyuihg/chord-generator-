@@ -2,6 +2,7 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>מחולל אקורדים לפי סולם</title>
   <style>
     body {
@@ -10,7 +11,9 @@
       direction: rtl;
       text-align: center;
       padding: 20px;
+      margin: 0;
     }
+
     .container {
       max-width: 800px;
       margin: auto;
@@ -19,6 +22,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
+
     select, input[type="text"] {
       padding: 10px;
       width: 100%;
@@ -27,18 +31,22 @@
       border-radius: 6px;
       font-size: 16px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     th, td {
       padding: 12px;
       border-bottom: 1px solid #ddd;
     }
+
     th {
       background: #f0f0f0;
     }
+
     td input {
       width: 100%;
       border: none;
@@ -46,11 +54,70 @@
       text-align: center;
       font-size: 16px;
     }
+
     .capo-box {
       margin-top: 30px;
       background: #eef2f7;
       padding: 10px;
       border-radius: 8px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        padding: 15px;
+        border-radius: 10px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #ccc;
+      }
+
+      td {
+        text-align: right;
+        padding: 8px;
+        position: relative;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 4px;
+        color: #333;
+      }
+
+      td input {
+        text-align: right;
+        font-size: 15px;
+      }
     }
   </style>
 </head>
@@ -82,6 +149,7 @@
       <p id="capoResult"></p>
     </div>
   </div>
+
   <script>
     const chromatic = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -112,7 +180,7 @@
 
     const allScales = [
       "C","G","D","A","E","F","Bb","Eb","Ab","Db","Gb","B","F#","C#",
-    "Bm","Am","Em","Dm","Gm","Cm","Fm","Bbm","Ebm","Abm","Dbm"
+      "Bm","Am","Em","Dm","Gm","Cm","Fm","Bbm","Ebm","Abm","Dbm"
     ];
 
     const scales = {};
@@ -146,6 +214,7 @@
         const tr = document.createElement("tr");
 
         const degree = document.createElement("td");
+        degree.setAttribute("data-label", "דרגה");
         const input1 = document.createElement("input");
         input1.value = row[0];
         input1.readOnly = true;
@@ -153,6 +222,7 @@
         tr.appendChild(degree);
 
         const chord = document.createElement("td");
+        chord.setAttribute("data-label", "אקורד");
         const input2 = document.createElement("input");
         const suffix = row[2] === "minor" ? "m" : row[2] === "diminished" ? "°" : "";
         input2.value = row[1] + suffix;
@@ -161,6 +231,7 @@
         tr.appendChild(chord);
 
         const role = document.createElement("td");
+        role.setAttribute("data-label", "תפקיד משוער");
         const input3 = document.createElement("input");
         input3.value = row[3];
         input3.readOnly = true;
