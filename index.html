@@ -23,6 +23,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
     select, input[type="text"] {
       padding: 10px;
       width: 100%;
@@ -77,14 +82,10 @@
       background: #0056b3;
     }
 
+    /* עיצוב לטלפון בלבד */
     @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
-
-      .container {
-        padding: 15px;
-        border-radius: 10px;
+      h1 {
+        font-size: 20px;
       }
 
       table, thead, tbody, th, td, tr {
@@ -98,6 +99,9 @@
       tr {
         margin-bottom: 15px;
         border-bottom: 1px solid #ccc;
+        padding: 10px;
+        background: #fafafa;
+        border-radius: 10px;
       }
 
       td {
@@ -124,7 +128,6 @@
 <body>
   <div class="container">
     <h1>מחולל אקורדים לפי סולם</h1>
-
     <label for="scaleSelect">בחר סולם:</label>
     <select id="scaleSelect" onchange="updateTable()"></select>
 
@@ -149,7 +152,6 @@
       <p id="capoResult"></p>
     </div>
   </div>
-
   <script>
     const chromatic = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
