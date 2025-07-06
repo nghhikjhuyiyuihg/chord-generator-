@@ -32,13 +32,13 @@
       font-size: 16px;
       width: 100%;
       margin: 8px 0;
+      box-sizing: border-box;
     }
 
     select, input[type="text"] {
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
     }
 
     button {
@@ -180,7 +180,7 @@
       <tbody id="chordTable"></tbody>
     </table>
 
-    <!-- כפתור העתק אקורדים -->
+    <!-- כפתור העתקה מחוץ לטבלה -->
     <button id="copyChordsBtn" onclick="copyChords()">העתק אקורדים</button>
     <p id="copyStatus" style="color:green; margin-top:10px;"></p>
 
@@ -315,21 +315,24 @@
 
         const degreeCell = document.createElement("td");
         degreeCell.innerText = deg;
+        degreeCell.setAttribute("data-label", "דרגה");
         tr.appendChild(degreeCell);
 
         const chordCell = document.createElement("td");
         chordCell.innerText = getChordFromScale(scaleNotes, i);
+        chordCell.setAttribute("data-label", "אקורד");
         tr.appendChild(chordCell);
 
         const roleCell = document.createElement("td");
         roleCell.innerText = degreeRolesMajor[i] || "";
+        roleCell.setAttribute("data-label", "תפקיד משוער");
         tr.appendChild(roleCell);
 
         tableBody.appendChild(tr);
       });
     }
 
-    // פונקציית העתקת אקורדים ללוח
+    // פונקציית העתקת האקורדים
     function copyChords() {
       const tableBody = document.getElementById("chordTable");
       if (!tableBody) return;
