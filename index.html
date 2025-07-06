@@ -180,7 +180,8 @@
       <tbody id="chordTable"></tbody>
     </table>
 
-    <button id="copyChordsBtn">העתק אקורדים</button>
+    <!-- כפתור העתק אקורדים -->
+    <button id="copyChordsBtn" onclick="copyChords()">העתק אקורדים</button>
     <p id="copyStatus" style="color:green; margin-top:10px;"></p>
 
     <div class="capo-box">
@@ -242,7 +243,6 @@
 
       let idx = chromatic.indexOf(noteRoot);
       if (idx === -1) {
-        console.warn("תו לא נמצא במפתח הכרומטי:", noteRoot);
         return null; // לא תקין
       }
       scaleNotes.push(chromatic[idx]);
@@ -329,30 +329,27 @@
       });
     }
 
-    // פונקציה להעתקת האקורדים מהטבלה ללוח
+    // פונקציית העתקת אקורדים ללוח
     function copyChords() {
       const tableBody = document.getElementById("chordTable");
+      if (!tableBody) return;
+
       let chordsText = "";
 
-      // מעבר על כל השורות בטבלה
       for (let row of tableBody.rows) {
         const degree = row.cells[0].innerText.trim();
         const chord = row.cells[1].innerText.trim();
         const role = row.cells[2].innerText.trim();
+
         chordsText += `${degree}: ${chord} - ${role}\n`;
       }
 
-      // העתקה ללוח
       navigator.clipboard.writeText(chordsText).then(() => {
         const status = document.getElementById("copyStatus");
         status.innerText = "האקורדים הועתקו בהצלחה!";
-        setTimeout(() => {
-          status.innerText = "";
-        }, 3000);
+        setTimeout(() => { status.innerText = ""; }, 3000);
       }).catch(err => {
-        const status = document.getElementById("copyStatus");
-        status.innerText = "שגיאה בהעתקה.";
-        console.error(err);
+        alert("לא הצלחנו להעתיק את האקורדים. נסה שוב.");
       });
     }
 
@@ -410,9 +407,6 @@
       });
 
       updateTable();
-
-      // מחברים את הכפתור לפונקציית ההעתקה
-      document.getElementById("copyChordsBtn").addEventListener("click", copyChords);
     };
   </script>
 </body>
