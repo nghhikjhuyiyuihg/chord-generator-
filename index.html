@@ -325,20 +325,19 @@
       });
     }
 
-    // קאפו - מחשבון כפי שהיה בקוד המקורי
+    // קאפו - פונקציה מתוקנת
     function calculateCapo() {
       const from = document.getElementById("fromScale").value;
       const to = document.getElementById("toScale").value;
 
-      const fromNote = from.replace('m','').toUpperCase();
-      const toNote = to.replace('m','').toUpperCase();
-
+      // השתמש בשם המקורי בלי toUpperCase
       const enharmonicNorm = {
-        "BB": "A#", "EB": "D#", "AB": "G#", "DB": "C#", "GB": "F#"
+        "Bb": "A#", "Eb": "D#", "Ab": "G#", "Db": "C#", "Gb": "F#",
+        "Cb": "B",  "Fb": "E",  "E#": "F",  "B#": "C"
       };
 
-      const fromNorm = enharmonicNorm[fromNote] || fromNote;
-      const toNorm = enharmonicNorm[toNote] || toNote;
+      const fromNorm = enharmonicNorm[from] || from;
+      const toNorm = enharmonicNorm[to] || to;
 
       const fromIndex = chromatic.indexOf(fromNorm);
       const toIndex = chromatic.indexOf(toNorm);
