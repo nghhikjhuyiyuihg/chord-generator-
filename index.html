@@ -56,17 +56,11 @@
       background: #0056b3;
     }
 
-    .table-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-top: 20px;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
       font-size: 16px;
-      min-width: 600px;
     }
 
     th, td {
@@ -97,10 +91,67 @@
       border-radius: 8px;
     }
 
-    #copyMessage {
-      margin-top: 5px;
-      color: green;
-      font-weight: bold;
+    /* רספונסיבי - כרטיסים לנייד במקום טבלה */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 20px;
+      }
+
+      select, input[type="text"], button, label {
+        font-size: 14px;
+        padding: 8px;
+      }
+
+      table {
+        display: none; /* מסתירים טבלה בנייד */
+      }
+
+      /* יוצרים כרטיסים במקומה */
+      #chordTable tr {
+        display: block;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #fafafa;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+        text-align: right;
+      }
+
+      #chordTable tr td {
+        display: block;
+        padding: 4px 0;
+        border: none;
+        white-space: normal; /* מאפשר שורות ארוכות */
+      }
+
+      #chordTable tr td input {
+        font-size: 14px;
+        padding: 4px 0;
+        width: 100%;
+        text-align: right;
+        border: none;
+        background: none;
+      }
+
+      /* תוויות לפני כל שדה בכרטיס */
+      #chordTable tr td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+      }
+
+      /* הקטנת גודל הכותרות והכפתורים */
+      .capo-box {
+        padding: 8px;
+        font-size: 14px;
+      }
+      button {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -109,24 +160,25 @@
     <h1>מחולל אקורדים לפי סולם</h1>
 
     <label for="scaleSelect">בחר סולם:</label>
-    <select id="scaleSelect" onchange="updateTable()"></select>
+    <select id="scaleSelect" onchange="updateTable()">
+      <option value="C">C</option>
+      <option value="Am">Am</option>
+      <option value="E#m">E#m</option>
+      <option value="Bb">Bb</option>
+      <option value="B#">B#</option>
+      <option value="F#m">F#m</option>
+    </select>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>דרגה</th>
-            <th>אקורד</th>
-            <th>תפקיד משוער</th>
-          </tr>
-        </thead>
-        <tbody id="chordTable"></tbody>
-      </table>
-    </div>
-
-    <!-- כפתור העתקה -->
-    <button onclick="copyChords()">📋 העתק אקורדים</button>
-    <p id="copyMessage"></p>
+    <table>
+      <thead>
+        <tr>
+          <th>דרגה</th>
+          <th>אקורד</th>
+          <th>תפקיד משוער</th>
+        </tr>
+      </thead>
+      <tbody id="chordTable"></tbody>
+    </table>
 
     <div class="capo-box">
       <h3>חשב מיקום קאפו 🎸</h3>
@@ -142,110 +194,138 @@
   <script>
     const chromatic = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-    const majorPattern = [
-      ["I", "Major", "מרכז השיר"],
-      ["ii", "minor", "משמש לעומק ומעבר"],
-      ["iii", "minor", "צליל רגשי"],
-      ["IV", "Major", "אקורד מעבר"],
-      ["V", "Major", "אקורד חזק לפני חזרה"],
-      ["vi", "minor", "אקורד עצוב/חילופי בסיס"],
-      ["vii°", "diminished", "לא יציב, יוצר מתח"]
-    ];
-
-    const minorPattern = [
-      ["i", "minor", "מרכז הסולם העצוב"],
-      ["ii°", "diminished", "מתח"],
-      ["III", "Major", "תחושת תקווה"],
-      ["iv", "minor", "עומק"],
-      ["v", "minor", "מתח לפני פתרון"],
-      ["VI", "Major", "הרחבה רגשית"],
-      ["VII", "Major", "לפני חזרה לטוניקה"]
-    ];
-
+    // מפה לשינוי תווים נדירים ל-enharmonic מקובל
     const enharmonicMap = {
       "Bb": "A#", "Eb": "D#", "Ab": "G#", "Db": "C#", "Gb": "F#",
-      "Bbm": "A#m", "Ebm": "D#m", "Abm": "G#m", "Dbm": "C#m", "Gbm": "F#m"
+      "Cb": "B", "Fb": "E", "E#": "F", "B#": "C",
+      "Bbm": "A#m", "Ebm": "D#m", "Abm": "G#m", "Dbm": "C#m", "Gbm": "F#m",
+      "Cbm": "Bm", "Fbm": "Em", "E#m": "Fm", "B#m": "Cm"
     };
 
-    const allScales = [
-      "C","G","D","A","E","F","Bb","Eb","Ab","Db","Gb","B","F#","C#",
-      "Bm","Am","Em","Dm","Gm","Cm","Fm","Bbm","Ebm","Abm","Dbm"
+    // צעדים לסולמות מז'ור ומינור (ברירת מחדל)
+    const scaleSteps = {
+      major: [2, 2, 1, 2, 2, 2, 1],
+      minor: [2, 1, 2, 2, 1, 2, 2],
+    };
+
+    // תפקידים לפי דרגה במז'ור (ברירת מחדל)
+    const degreeRolesMajor = [
+      "מרכז השיר",
+      "משמש לעומק ומעבר",
+      "צליל רגשי",
+      "אקורד מעבר",
+      "אקורד חזק לפני חזרה",
+      "אקורד עצוב/חילופי בסיס",
+      "לא יציב, יוצר מתח"
     ];
 
-    const scales = {};
-
-    function generateScale(baseNote) {
-      let note = baseNote;
-      if (!chromatic.includes(baseNote.replace('m',''))) {
-        note = enharmonicMap[baseNote];
-      }
-      if (!note) return;
-      const isMinor = baseNote.endsWith('m');
-      const steps = isMinor ? [2,1,2,2,1,2,2] : [2,2,1,2,2,2,1];
-      let index = chromatic.indexOf(note.replace('m',''));
-      const notes = [];
-      for (let step of steps) {
-        notes.push(chromatic[index % chromatic.length]);
-        index += step;
-      }
-      const pattern = isMinor ? minorPattern : majorPattern;
-      scales[baseNote] = pattern.map((p, i) => [p[0], notes[i], p[1], p[2]]);
+    // חשבון מרווח חצאי טונים בין תווים (כלומר אינטרוולים)
+    function halfToneDistance(from, to) {
+      const fromIndex = chromatic.indexOf(from);
+      const toIndex = chromatic.indexOf(to);
+      if (fromIndex === -1 || toIndex === -1) return null;
+      return (toIndex - fromIndex + 12) % 12;
     }
 
-    allScales.forEach(generateScale);
+    // יוצר סולם מחוץ לטוניקה (root) ולסוג סולם
+    function generateScale(rootNote, type="major") {
+      // המרת enharmonic אם צריך
+      let baseNote = enharmonicMap[rootNote] || rootNote;
+      let noteRoot = baseNote.replace(/m$/, "");
+      const isMinor = rootNote.endsWith("m") || type === "minor";
+
+      const steps = isMinor ? scaleSteps.minor : scaleSteps.major;
+      const scaleNotes = [];
+
+      let idx = chromatic.indexOf(noteRoot);
+      if (idx === -1) {
+        return null; // לא תקין
+      }
+      scaleNotes.push(chromatic[idx]);
+
+      for (let step of steps) {
+        idx = (idx + step) % chromatic.length;
+        scaleNotes.push(chromatic[idx]);
+      }
+
+      // scaleNotes עכשיו 8 תווים (אוקטבה), אבל צריך רק 7
+      scaleNotes.pop();
+
+      return scaleNotes;
+    }
+
+    // סיווג אקורד לפי המרווחים בין התווים בטריאדה (3 תווים)
+    function classifyChord(triad) {
+      if (triad.length < 3) return "לא מוגדר";
+
+      // המרת enharmonic:
+      const root = enharmonicMap[triad[0]] || triad[0];
+      const third = enharmonicMap[triad[1]] || triad[1];
+      const fifth = enharmonicMap[triad[2]] || triad[2];
+
+      const interval1 = halfToneDistance(root, third);
+      const interval2 = halfToneDistance(third, fifth);
+
+      if (interval1 === 4 && interval2 === 3) return "Major";
+      if (interval1 === 3 && interval2 === 4) return "minor";
+      if (interval1 === 3 && interval2 === 3) return "diminished";
+      if (interval1 === 4 && interval2 === 4) return "augmented";
+
+      return "לא מוגדר";
+    }
+
+    // מחזיר אקורד בטריאדה מסולם ודרגה
+    function getChordFromScale(scaleNotes, degree) {
+      const root = scaleNotes[degree];
+      // אקורד הוא טריאדה: root + next + next after that (מעגלי)
+      const third = scaleNotes[(degree + 2) % scaleNotes.length];
+      const fifth = scaleNotes[(degree + 4) % scaleNotes.length];
+
+      const chordType = classifyChord([root, third, fifth]);
+
+      const suffix = chordType === "minor" ? "m" : chordType === "diminished" ? "°" : chordType === "augmented" ? "+" : "";
+
+      return root + suffix;
+    }
 
     function updateTable() {
-      const scale = document.getElementById("scaleSelect").value;
+      const scaleSelect = document.getElementById("scaleSelect");
+      const scale = scaleSelect.value.trim();
+
+      // החלט איזה סוג סולם: אם מסתיים ב-m = מינור, אחרת מז'ור (אפשר להרחיב)
+      const scaleType = scale.endsWith("m") ? "minor" : "major";
+
+      const scaleNotes = generateScale(scale, scaleType);
       const tableBody = document.getElementById("chordTable");
       tableBody.innerHTML = "";
-      if (!scales[scale]) generateScale(scale);
-      scales[scale].forEach(row => {
+
+      if (!scaleNotes) {
+        tableBody.innerHTML = "<tr><td colspan='3'>סולם לא חוקי</td></tr>";
+        return;
+      }
+
+      const degrees = ["I", "II", "III", "IV", "V", "VI", "VII"];
+
+      degrees.forEach((deg, i) => {
         const tr = document.createElement("tr");
 
-        const degree = document.createElement("td");
-        const input1 = document.createElement("input");
-        input1.value = row[0];
-        input1.readOnly = true;
-        degree.appendChild(input1);
-        tr.appendChild(degree);
+        const degreeCell = document.createElement("td");
+        degreeCell.innerText = deg;
+        tr.appendChild(degreeCell);
 
-        const chord = document.createElement("td");
-        const input2 = document.createElement("input");
-        const suffix = row[2] === "minor" ? "m" : row[2] === "diminished" ? "°" : "";
-        input2.value = row[1] + suffix;
-        input2.readOnly = true;
-        chord.appendChild(input2);
-        tr.appendChild(chord);
+        const chordCell = document.createElement("td");
+        chordCell.innerText = getChordFromScale(scaleNotes, i);
+        tr.appendChild(chordCell);
 
-        const role = document.createElement("td");
-        const input3 = document.createElement("input");
-        input3.value = row[3];
-        input3.readOnly = true;
-        role.appendChild(input3);
-        tr.appendChild(role);
+        const roleCell = document.createElement("td");
+        roleCell.innerText = degreeRolesMajor[i] || "";
+        tr.appendChild(roleCell);
 
         tableBody.appendChild(tr);
       });
     }
 
-    function copyChords() {
-      const scale = document.getElementById("scaleSelect").value;
-      if (!scales[scale]) return;
-
-      const chords = scales[scale].map(row => {
-        const suffix = row[2] === "minor" ? "m" : row[2] === "diminished" ? "°" : "";
-        return row[1] + suffix;
-      });
-
-      const text = chords.join(" ");
-      navigator.clipboard.writeText(text).then(() => {
-        document.getElementById("copyMessage").innerText = "האקורדים הועתקו!";
-        setTimeout(() => document.getElementById("copyMessage").innerText = "", 3000);
-      }).catch(() => {
-        document.getElementById("copyMessage").innerText = "שגיאה בהעתקה.";
-      });
-    }
-
+    // קאפו - מחשבון כפי שהיה בקוד המקורי
     function calculateCapo() {
       const from = document.getElementById("fromScale").value;
       const to = document.getElementById("toScale").value;
@@ -281,25 +361,21 @@
       document.getElementById("capoResult").innerText = result;
     }
 
+    // טעינה ראשונית - ממלא גם את תפריטי קאפו
     window.onload = () => {
       const scaleSelect = document.getElementById("scaleSelect");
       const fromSelect = document.getElementById("fromScale");
       const toSelect = document.getElementById("toScale");
 
-      allScales.forEach(scale => {
-        const opt = document.createElement("option");
-        opt.value = opt.text = scale;
-        scaleSelect.appendChild(opt);
+      // מלא תפריטים בקאפו רק עם סולמות מז'ור ללא מינור (אפשר להרחיב אם רוצים)
+      ["C","G","D","A","E","F","Bb","Eb","Ab","Db","Gb","B","F#","C#"].forEach(scale => {
+        let optFrom = document.createElement("option");
+        optFrom.value = optFrom.text = scale;
+        fromSelect.appendChild(optFrom);
 
-        if (!scale.endsWith('m')) {
-          const optFrom = document.createElement("option");
-          optFrom.value = optFrom.text = scale;
-          fromSelect.appendChild(optFrom);
-
-          const optTo = document.createElement("option");
-          optTo.value = optTo.text = scale;
-          toSelect.appendChild(optTo);
-        }
+        let optTo = document.createElement("option");
+        optTo.value = optTo.text = scale;
+        toSelect.appendChild(optTo);
       });
 
       updateTable();
