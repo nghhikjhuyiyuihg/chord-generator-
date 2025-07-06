@@ -179,7 +179,10 @@
       if (!chromatic.includes(baseNote.replace('m',''))) {
         note = enharmonicMap[baseNote];
       }
-      if (!note) return;
+      if (!note) {
+        console.log(`generateScale: לא נמצא תו תקין עבור ${baseNote}`);
+        return;
+      }
       const isMinor = baseNote.endsWith('m');
       const steps = isMinor ? [2,1,2,2,1,2,2] : [2,2,1,2,2,2,1];
       let index = chromatic.indexOf(note.replace('m',''));
@@ -190,15 +193,24 @@
       }
       const pattern = isMinor ? minorPattern : majorPattern;
       scales[baseNote] = pattern.map((p, i) => [p[0], notes[i], p[1], p[2]]);
+      console.log(`generateScale: יצר סולם עבור ${baseNote}`, scales[baseNote]);
     }
 
     allScales.forEach(generateScale);
 
     function updateTable() {
+      console.log("updateTable: קורא לעדכון הטבלה");
       const scale = document.getElementById("scaleSelect").value;
       const tableBody = document.getElementById("chordTable");
       tableBody.innerHTML = "";
-      if (!scales[scale]) generateScale(scale);
+      if (!scales[scale]) {
+        console.log(`updateTable: הסולם ${scale} לא קיים במערך, יוצר סולם חדש`);
+        generateScale(scale);
+      }
+      if (!scales[scale]) {
+        console.warn(`updateTable: לא הצליח למצוא או ליצור סולם עבור ${scale}`);
+        return;
+      }
       scales[scale].forEach(row => {
         const tr = document.createElement("tr");
 
@@ -229,8 +241,12 @@
     }
 
     function copyChords() {
+      console.log("copyChords: מנסה להעתיק את האקורדים");
       const scale = document.getElementById("scaleSelect").value;
-      if (!scales[scale]) return;
+      if (!scales[scale]) {
+        console.warn("copyChords: הסולם לא קיים, ביטול העתקה");
+        return;
+      }
 
       const chords = scales[scale].map(row => {
         const suffix = row[2] === "minor" ? "m" : row[2] === "diminished" ? "°" : "";
@@ -247,6 +263,7 @@
     }
 
     function calculateCapo() {
+      console.log("calculateCapo: מחשב את מיקום הקאפו");
       const from = document.getElementById("fromScale").value;
       const to = document.getElementById("toScale").value;
 
@@ -302,7 +319,11 @@
         }
       });
 
+      // הגדרת ערך ברירת מחדל ל-scaleSelect
+      scaleSelect.value = allScales[0];
+
       updateTable();
+      console.log("window.onload: סיימתי לאתחל את הדף");
     };
   </script>
 </body>
