@@ -180,6 +180,9 @@
       <tbody id="chordTable"></tbody>
     </table>
 
+    <button id="copyChordsBtn">העתק אקורדים</button>
+    <p id="copyStatus" style="color:green; margin-top:10px;"></p>
+
     <div class="capo-box">
       <h3>חשב מיקום קאפו 🎸</h3>
       <label for="fromScale">סולם שאתה מנגן בו:</label>
@@ -239,6 +242,7 @@
 
       let idx = chromatic.indexOf(noteRoot);
       if (idx === -1) {
+        console.warn("תו לא נמצא במפתח הכרומטי:", noteRoot);
         return null; // לא תקין
       }
       scaleNotes.push(chromatic[idx]);
@@ -325,19 +329,47 @@
       });
     }
 
-    // קאפו - פונקציה מתוקנת
+    // פונקציה להעתקת האקורדים מהטבלה ללוח
+    function copyChords() {
+      const tableBody = document.getElementById("chordTable");
+      let chordsText = "";
+
+      // מעבר על כל השורות בטבלה
+      for (let row of tableBody.rows) {
+        const degree = row.cells[0].innerText.trim();
+        const chord = row.cells[1].innerText.trim();
+        const role = row.cells[2].innerText.trim();
+        chordsText += `${degree}: ${chord} - ${role}\n`;
+      }
+
+      // העתקה ללוח
+      navigator.clipboard.writeText(chordsText).then(() => {
+        const status = document.getElementById("copyStatus");
+        status.innerText = "האקורדים הועתקו בהצלחה!";
+        setTimeout(() => {
+          status.innerText = "";
+        }, 3000);
+      }).catch(err => {
+        const status = document.getElementById("copyStatus");
+        status.innerText = "שגיאה בהעתקה.";
+        console.error(err);
+      });
+    }
+
+    // קאפו - מחשבון כפי שהיה בקוד המקורי
     function calculateCapo() {
       const from = document.getElementById("fromScale").value;
       const to = document.getElementById("toScale").value;
 
-      // השתמש בשם המקורי בלי toUpperCase
+      const fromNote = from.replace('m','').toUpperCase();
+      const toNote = to.replace('m','').toUpperCase();
+
       const enharmonicNorm = {
-        "Bb": "A#", "Eb": "D#", "Ab": "G#", "Db": "C#", "Gb": "F#",
-        "Cb": "B",  "Fb": "E",  "E#": "F",  "B#": "C"
+        "BB": "A#", "EB": "D#", "AB": "G#", "DB": "C#", "GB": "F#"
       };
 
-      const fromNorm = enharmonicNorm[from] || from;
-      const toNorm = enharmonicNorm[to] || to;
+      const fromNorm = enharmonicNorm[fromNote] || fromNote;
+      const toNorm = enharmonicNorm[toNote] || toNote;
 
       const fromIndex = chromatic.indexOf(fromNorm);
       const toIndex = chromatic.indexOf(toNorm);
@@ -378,6 +410,9 @@
       });
 
       updateTable();
+
+      // מחברים את הכפתור לפונקציית ההעתקה
+      document.getElementById("copyChordsBtn").addEventListener("click", copyChords);
     };
   </script>
 </body>
